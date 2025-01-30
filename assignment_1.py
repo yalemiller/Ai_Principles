@@ -1,13 +1,24 @@
 import heapq
 import networkx as nx
 import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
+
+__filename__ = "assignment_1.py"
+
+bfs_CitiesVisited = 0
+dfs_CitiesVisited = 0
+greedy_CitiesVisited = 0
+a_CitiesVisited = 0
 
 
 def bfs(graph, start, goal):
+    global bfs_CitiesVisited
     queue = [(start, [start])]
     visited = set()
 
     while queue:
+        bfs_CitiesVisited += 1
         node, path = queue.pop(0)
         if node == goal:
             return path
@@ -18,6 +29,8 @@ def bfs(graph, start, goal):
 
 
 def dfs(graph, start, goal, path=None, visited=None):
+    global dfs_CitiesVisited
+    dfs_CitiesVisited += 1
     if path is None:
         path = [start]
     if visited is None:
@@ -36,10 +49,12 @@ def dfs(graph, start, goal, path=None, visited=None):
 
 
 def best_first_search(graph, start, goal, heuristic):
+    global greedy_CitiesVisited
     pq = [(heuristic[start], start, [start])]
     visited = set()
 
     while pq:
+        greedy_CitiesVisited += 1
         _, node, path = heapq.heappop(pq)
         if node == goal:
             return path
@@ -51,10 +66,12 @@ def best_first_search(graph, start, goal, heuristic):
 
 
 def a_star_search(graph, start, goal, heuristic):
+    global a_CitiesVisited
     pq = [(0 + heuristic[start], 0, start, [start])]
     visited = set()
 
     while pq:
+        a_CitiesVisited += 1
         _, cost, node, path = heapq.heappop(pq)
         if node == goal:
             return path
@@ -110,34 +127,25 @@ heuristic = {
     "Giurgiu": 77,
 }
 
-
-# Function to visualize the graph
-def draw_graph(graph):
-    G = nx.Graph()
-    for node, edges in graph.items():
-        for neighbor, weight in edges.items():
-            G.add_edge(node, neighbor, weight=weight)
-
-    pos = nx.spring_layout(G)
-    labels = nx.get_edge_attributes(G, "weight")
-    nx.draw(
-        G,
-        pos,
-        with_labels=True,
-        node_color="lightblue",
-        edge_color="gray",
-        node_size=2000,
-        font_size=10,
-    )
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=labels)
-    plt.show()
-
-
-# Testing the functions
 start, goal = "Arad", "Bucharest"
 print("BFS Path:", bfs(graph, start, goal))
 print("DFS Path:", dfs(graph, start, goal))
 print("Best-First Search Path:", best_first_search(graph, start, goal, heuristic))
 print("A* Path:", a_star_search(graph, start, goal, heuristic))
 
-draw_graph(graph)
+labels = ["Breadth First", "Depth First", "Greedy", "A*"]
+values = [bfs_CitiesVisited, dfs_CitiesVisited, greedy_CitiesVisited, a_CitiesVisited]
+
+# Create the bar chart
+plt.bar(labels, values)
+
+# Add title and labels
+plt.title("Number of Cities Visited")
+plt.xlabel("Algorithm")
+plt.ylabel("Cities Visited")
+
+# Set the y-axis to display only whole numbers
+plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+
+# Show the chart
+plt.show()
