@@ -3,6 +3,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
+import timeit
 
 __filename__ = "assignment_1.py"
 
@@ -136,16 +137,30 @@ print("A* Path:", a_star_search(graph, start, goal, heuristic))
 labels = ["Breadth First", "Depth First", "Greedy", "A*"]
 values = [bfs_CitiesVisited, dfs_CitiesVisited, greedy_CitiesVisited, a_CitiesVisited]
 
-# Create the bar chart
+# Create the first chart (cities visited)
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
 plt.bar(labels, values)
-
-# Add title and labels
 plt.title("Number of Cities Visited")
 plt.xlabel("Algorithm")
 plt.ylabel("Cities Visited")
-
-# Set the y-axis to display only whole numbers
 plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
 
-# Show the chart
+
+time_bfs = timeit.timeit(
+    stmt="bfs(graph, start, goal)", globals=globals(), number=10000
+)
+time_dfs = timeit.timeit(
+    stmt="dfs(graph, start, goal)", globals=globals(), number=10000
+)  # Corrected: time_dfs
+
+
+plt.subplot(1, 2, 2)
+plt.bar(["Time for BFS", "Time for DFS"], [time_bfs, time_dfs])
+plt.title("Time Taken")
+plt.xlabel("Algorithm")
+plt.ylabel("Time")
+
+plt.tight_layout()  # prevent overlapping of subplots
+# Now, call plt.show() *once* at the end
 plt.show()
