@@ -1,3 +1,4 @@
+#pip install networkx matplotlib
 import heapq
 import networkx as nx
 import matplotlib.pyplot as plt
