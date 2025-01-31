@@ -1,9 +1,15 @@
 import heapq
-import networkx as nx
-import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import timeit
+from collections import deque
+
+# --- Hey Read Me! ---
+#
+# Run the following command before running this file
+# pip install networkx matplotlib
+#
+# --------------------
 
 bfs_CitiesVisited = 0
 dfs_CitiesVisited = 0
@@ -25,37 +31,45 @@ def reset_globals():
 
 def bfs(graph, start, goal):
     global bfs_CitiesVisited
-    queue = [(start, [start])]
+    queue = deque([[start]])
     visited = set()
 
     while queue:
+        path = queue.popleft()
+        city = path[-1]
         bfs_CitiesVisited += 1
-        node, path = queue.pop(0)
-        if node == goal:
+        if city == goal:
             return path
-        if node not in visited:
-            visited.add(node)
-            queue.extend((neighbor, path + [neighbor]) for neighbor in graph[node])
+        if city not in visited:
+            visited.add(city)
+            for neighbor in graph.get(city, {}):
+                new_path = list(path)
+                new_path.append(neighbor)
+                queue.append(new_path)
+
     return None
 
 
 def dfs(graph, start, goal, path=None, visited=None):
     global dfs_CitiesVisited
-    dfs_CitiesVisited += 1
     if path is None:
         path = [start]
     if visited is None:
         visited = set()
 
+    dfs_CitiesVisited += 1
+
     if start == goal:
         return path
+
     visited.add(start)
 
-    for neighbor in graph[start]:
+    for neighbor in graph.get(start, {}):
         if neighbor not in visited:
             new_path = dfs(graph, neighbor, goal, path + [neighbor], visited)
             if new_path:
                 return new_path
+
     return None
 
 
