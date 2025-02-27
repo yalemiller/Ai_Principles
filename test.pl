@@ -46,26 +46,155 @@ heuristic("Urziceni", 80).
 heuristic("Vaslui", 199).
 heuristic("Zerind", 374).
 
-
-
-% BFS implementation
-bfs(Start, Goal, Path) :- bfs_queue([[Start]], Goal, Path).
-
-% If the queue is empty, return an empty path
-bfs_queue([], _, []).
-
-% Process the queue
-bfs_queue([[Goal | Rest] | _], Goal, Path) :-
-    reverse([Goal | Rest], Path).
-
-bfs_queue([[Current | Rest] | Queue], Goal, Path) :-
-    findall([Next, Current | Rest], (edge(Current, Next), \+ member(Next, [Current | Rest])), Children),
-    append(Queue, Children, NewQueue),
-    bfs_queue(NewQueue, Goal, Path).
-
 % Helper predicate to get neighbors from the graph
 to_edge((City, Neighbors), (City, Neighbor)) :- member((Neighbor, _), Neighbors).
 edge(City1, City2) :-
     graph(Graph),
     member(Node, Graph),
     to_edge(Node, (City1, City2)).
+
+% Helper predicate to get edge cost from the graph
+edge_cost(City1, City2, Cost) :-
+    graph(Graph),
+    member((City1, Neighbors), Graph),
+    member((City2, Cost), Neighbors).
+
+% Calculate path cost
+calculate_cost([], 0).
+calculate_cost([_], 0).
+calculate_cost([City1, City2 | Rest], TotalCost) :-
+    edge_cost(City1, City2, Cost),
+    calculate_cost([City2 | Rest], RestCost),
+    TotalCost is Cost + RestCost.
+
+% Count visited nodes
+:- dynamic visited_counter/1.
+init_counter :- retractall(visited_counter(_)), assertz(visited_counter(0)).
+incr_counter :- retract(visited_counter(N)), N1 is N + 1, assertz(visited_counter(N1)).
+get_counter(C) :- visited_counter(C).
+
+% BFS implementation
+bfs(Start, Goal, Path) :- 
+    init_counter,
+    bfs_queue([[Start]], Goal, Path).
+
+% If the queue is empty, return an empty path
+bfs_queue([], _, []).
+
+% Process the queue
+bfs_queue([[Goal | Rest] | _], Goal, Path) :-
+    incr_counter,
+    reverse([Goal | Rest], Path).
+
+bfs_queue([[Current | Rest] | Queue], Goal, Path) :-
+    incr_counter,
+    findall([Next, Current | Rest], 
+           (edge(Current, Next), \+ member(Next, [Current | Rest])), 
+           Children),
+    append(Queue, Children, NewQueue),
+    bfs_queue(NewQueue, Goal, Path).
+
+% DFS implementation
+dfs(Start, Goal, Path) :- 
+    init_counter,
+    dfs_queue([[Start]], Goal, Path).
+
+% If the queue is empty, return an empty path
+dfs_queue([], _, []).
+
+% Process the queue
+dfs_queue([[Goal | Rest] | _], Goal, Path) :-
+    incr_counter,
+    reverse([Goal | Rest], Path).
+
+dfs_queue([[Current | Rest] | Queue], Goal, Path) :-
+    incr_counter,
+    findall([Next, Current | Rest], 
+           (edge(Current, Next), \+ member(Next, [Current | Rest])), 
+           Children),
+    append(Children, Queue, NewQueue), % Add to front for DFS
+    dfs_queue(NewQueue, Goal, Path).
+
+% Greedy search implementation
+greedy(Start, Goal, Path) :-
+    init_counter,
+    heuristic(Start, H),
+    greedy_queue([[[Start], H]], Goal, Path).
+
+% If the queue is empty, return an empty path
+greedy_queue([], _, []).
+
+% Process the queue
+greedy_queue([[[Goal | Rest], _] | _], Goal, Path) :-
+    incr_counter,
+    reverse([Goal | Rest], Path).
+
+greedy_queue([[[Current | Rest], _] | Queue], Goal, Path) :-
+    incr_counter,
+    findall([[Next, Current | Rest], H],
+           (edge(Current, Next), 
+            \+ member(Next, [Current | Rest]),
+            heuristic(Next, H)),
+           Children),
+    insert_all(Children, Queue, NewQueue),
+    greedy_queue(NewQueue, Goal, Path).
+
+% Insert all children into the queue in sorted order
+insert_all([], Queue, Queue).
+insert_all([Child | Children], Queue, FinalQueue) :-
+    insert_by_heuristic(Child, Queue, NewQueue),
+    insert_all(Children, NewQueue, FinalQueue).
+
+% Insert a child into the queue based on heuristic
+insert_by_heuristic(Child, [], [Child]) :- !.
+insert_by_heuristic([_, H], [[_, H1] | Rest], [[_, H1] | NewRest]) :-
+    H > H1, !,
+    insert_by_heuristic([_, H], Rest, NewRest).
+insert_by_heuristic(Child, Queue, [Child | Queue]).
+
+% Run the algorithms and report results
+run_test(Start, Goal) :-
+    format('~nTesting paths from ~w to ~w:~n', [Start, Goal]),
+    format('----------------------------------------~n'),
+    
+    % Breadth-first search
+    init_counter,
+    bfs(Start, Goal, BFSPath),
+    get_counter(BFSVisited),
+    calculate_cost(BFSPath, BFSCost),
+    length(BFSPath, BFSLength),
+    format('BFS Path: ~w~n', [BFSPath]),
+    format('BFS Path Length: ~w~n', [BFSLength]),
+    format('BFS Visited Nodes: ~w~n', [BFSVisited]),
+    format('BFS Path Cost: ~w~n', [BFSCost]),
+    format('----------------------------------------~n'),
+    
+    % Depth-first search
+    init_counter,
+    dfs(Start, Goal, DFSPath),
+    get_counter(DFSVisited),
+    calculate_cost(DFSPath, DFSCost),
+    length(DFSPath, DFSLength),
+    format('DFS Path: ~w~n', [DFSPath]),
+    format('DFS Path Length: ~w~n', [DFSLength]),
+    format('DFS Visited Nodes: ~w~n', [DFSVisited]),
+    format('DFS Path Cost: ~w~n', [DFSCost]),
+    format('----------------------------------------~n'),
+    
+    % Greedy search
+    init_counter,
+    greedy(Start, Goal, GreedyPath),
+    get_counter(GreedyVisited),
+    calculate_cost(GreedyPath, GreedyCost),
+    length(GreedyPath, GreedyLength),
+    format('Greedy Path: ~w~n', [GreedyPath]),
+    format('Greedy Path Length: ~w~n', [GreedyLength]),
+    format('Greedy Visited Nodes: ~w~n', [GreedyVisited]),
+    format('Greedy Path Cost: ~w~n', [GreedyCost]),
+    format('========================================~n').
+
+% Run the assignment tests
+run_assignment :-
+    run_test("Oradea", "Bucharest"),
+    run_test("Timisoara", "Bucharest"),
+    run_test("Neamt", "Bucharest").
