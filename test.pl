@@ -94,6 +94,9 @@ bfs_queue([[Current | Rest] | Queue], Goal, Path) :-
     append(Queue, Children, NewQueue),
     bfs_queue(NewQueue, Goal, Path).
 
+
+
+
 % DFS implementation
 dfs(Start, Goal, Path) :- 
     init_counter,
@@ -115,6 +118,9 @@ dfs_queue([[Current | Rest] | Queue], Goal, Path) :-
     append(Children, Queue, NewQueue), % Add to front for DFS
     dfs_queue(NewQueue, Goal, Path).
 
+
+
+
 % Greedy search implementation
 greedy(Start, Goal, Path) :-
     init_counter,
@@ -127,7 +133,9 @@ greedy_queue([], _, []).
 % Process the queue
 greedy_queue([[[Goal | Rest], _] | _], Goal, Path) :-
     incr_counter,
-    reverse([Goal | Rest], Path).
+    reverse([Goal | Rest], Path), 
+    !.  % Ensure it stops here only when a valid path exists
+
 
 greedy_queue([[[Current | Rest], _] | Queue], Goal, Path) :-
     incr_counter,
@@ -145,12 +153,16 @@ insert_all([Child | Children], Queue, FinalQueue) :-
     insert_by_heuristic(Child, Queue, NewQueue),
     insert_all(Children, NewQueue, FinalQueue).
 
-% Insert a child into the queue based on heuristic
-insert_by_heuristic(Child, [], [Child]) :- !.
-insert_by_heuristic([_, H], [[_, H1] | Rest], [[_, H1] | NewRest]) :-
-    H > H1, !,
-    insert_by_heuristic([_, H], Rest, NewRest).
-insert_by_heuristic(Child, Queue, [Child | Queue]).
+% Insert a child into the queue based on heuristic (sort in ascending order)
+insert_by_heuristic([Path, H], [], [[Path, H]]) :- !.
+insert_by_heuristic([Path, H], [[Path1, H1] | Rest], [[Path, H], [Path1, H1] | Rest]) :-
+    H < H1, !.
+insert_by_heuristic(Child, [First | Rest], [First | NewRest]) :-
+    insert_by_heuristic(Child, Rest, NewRest).
+
+
+
+
 
 % Run the algorithms and report results
 run_test(Start, Goal) :-
