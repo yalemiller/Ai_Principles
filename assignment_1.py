@@ -1,3 +1,4 @@
+#pip install networkx matplotlib
 import heapq
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
